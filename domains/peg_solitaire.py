@@ -12,6 +12,8 @@ Starting with a hardcoded representation of the triangle version
 *****
 """
 
+from interface import SearchInterface
+
 PEG_CHAR = '!'
 HOLE_CHAR = 'O'
 NULL_CHAR = ' '
@@ -154,6 +156,7 @@ class Board():
         self.holes[move.start_position[ROW]][move.start_position[COLUMN]] = HOLE
         self.holes[move.jumped_peg[ROW]][move.jumped_peg[COLUMN]] = HOLE
         self.holes[move.end_position[ROW]][move.end_position[COLUMN]] = PEG
+        return move.cost
 
     def undo_move(self, move):
         self.holes[move.start_position[ROW]][move.start_position[COLUMN]] = PEG
@@ -162,6 +165,7 @@ class Board():
         # TODO: Validate that move was legal before undoing
         if not self.legal_move(move):
             raise ValueError("Move illegal after undoing itself. Something is wrong!: {}".format(move))
+        return move.cost
 
     def solved(self):
         peg_count = 0
@@ -200,6 +204,42 @@ class Board():
                     raise ValueError("Got unexpected value in holes, expected one of {-1, 0, 1}, but saw: " + str(column))
             ret_str += '\n'
         return ret_str
+
+
+def PegSolitaireInterface(Interface):
+
+    self.problem = None
+
+    def __init__(self, problem):
+        self.problem = problem
+
+    # Here, a state is a Board
+    def goal_p(self, state):
+        return state.solved()
+
+    def get_actions(self, state):
+        return state.legal_moves()
+
+    def expand(self,state):
+        moves = state.legal_moves()
+        children = []
+        for move in moves:
+            child = state.copy()
+            child.apply_move(move)
+            children.append(child)
+        return children
+
+    def initial_state(self):
+        return self.problem.copy()
+
+    def apply_action(self, state, action):
+        return state.apply_move(action)
+
+    def undo_action(self, state, action):
+        return state.undo_move(action)
+
+    def vailadte_solution(self, action_list, display=False):
+        self.problem.validate_solution(action_list, display)
 
 
 if __name__ == "__main__":
