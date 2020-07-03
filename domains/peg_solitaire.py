@@ -12,7 +12,7 @@ Starting with a hardcoded representation of the triangle version
 *****
 """
 
-from interface import SearchInterface
+from . import SearchInterface
 
 PEG_CHAR = '!'
 HOLE_CHAR = 'O'
@@ -171,7 +171,7 @@ class Board():
         peg_count = 0
         for x in range(self.cols):
             for y in range(self.rows):
-                if self.holse[y][x] == PEG:
+                if self.holes[y][x] == PEG:
                     peg_count += 1
             if peg_count > 1:
                 return False
@@ -206,9 +206,7 @@ class Board():
         return ret_str
 
 
-def PegSolitaireInterface(Interface):
-
-    self.problem = None
+class PegSolitaireInterface(SearchInterface):
 
     def __init__(self, problem):
         self.problem = problem

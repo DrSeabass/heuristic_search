@@ -1,4 +1,4 @@
-def SearchInterface():
+class SearchInterface():
 
     def __init__(self, problem):
         pass
