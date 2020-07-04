@@ -38,12 +38,12 @@ class BreadthFirstSearch():
             node = queue[0]
             queue = queue[1:]
             key_val = self.problem_interface.key(node.state)
+            if (self.steps % 1000) == 0:
+                print("Step {} Duplicates {} In Queue : {}".format(self.steps, duplicates, len(queue)))
             if key_val in seen:
                 duplicates += 1
                 continue
             seen[key_val] = node.cost
-            if (self.steps % 1000) == 0:
-                print("Step {} Duplicates {} In Queue : {}".format(self.steps, duplicates, len(queue)))
             if self.problem_interface.goal_p(node.state):
                 self.solutions[0] = node.get_solution()
                 self.costs = [node.cost]
