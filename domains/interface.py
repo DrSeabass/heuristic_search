@@ -9,6 +9,15 @@ class SearchInterface():
     def get_actions(self, state):
         raise NotImplementedError()
 
+    def key(self, state):
+        raise NotImplementedError()
+
+    def cost_to_go(self, state):
+        raise NotImplementedError()
+
+    def distance_to_go(self, state):
+        raise NotImplementedError()
+
     def expand(self,state):
         raise NotImplementedError()
 
