@@ -1,8 +1,9 @@
-"""
-Breadth first search
-"""
 
 class Node():
+    """
+    Node representation in a search tree / graph
+    We rely on parent pointers and actions to reconstruct solutions once the problem is solved
+    """
     def __init__(self, state, action=None, parent=None):
         self.state = state
         self.cost = 0
@@ -23,6 +24,9 @@ class Node():
         return path
 
 class BreadthFirstSearch():
+    """
+    Breadth first search
+    """
     def __init__(self, problem_interface):
         self.problem_interface = problem_interface
         self.steps = 0
