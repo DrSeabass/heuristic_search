@@ -5,11 +5,34 @@ https://en.wikipedia.org/wiki/Peg_solitaire
 
 Starting with a hardcoded representation of the triangle version
 
+Cracker Barrel, allows lateral and diagonal jumps
 *
 **
 ***
 ****
 *****
+
+Jumping only in Cardinal Directions
+
+English (7x7 cross)
+  ***  
+  ***
+*******
+***O***
+*******
+  ***
+  ***
+
+European (7x7 octagonish)
+
+  ***  
+ *****
+*******
+***O***
+*******
+ *****
+  ***
+
 """
 
 from . import SearchInterface
@@ -204,7 +227,7 @@ class Board():
                     raise ValueError("Got unexpected value in holes, expected one of {-1, 0, 1}, but saw: " + str(column))
             ret_str += '\n'
         return ret_str
-
+    
 
 class PegSolitaireInterface(SearchInterface):
 
