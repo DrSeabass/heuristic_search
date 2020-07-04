@@ -250,6 +250,9 @@ class PegSolitaireInterface(SearchInterface):
             children.append(child)
         return children
 
+    def key(self, state):
+        return str(state)
+
     def initial_state(self):
         return self.problem.copy()
 
