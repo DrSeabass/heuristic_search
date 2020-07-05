@@ -48,6 +48,10 @@ NON_PLACE = -1
 ROW = 0
 COLUMN = 1
 
+TRIANGLE = 0
+ENGLISH = 1
+EUROPEAN = 2
+
 class Move():
 
     start_position = None
@@ -81,6 +85,43 @@ class Board():
         self.rows = 5
         self.cols = 5
 
+    def __init_english_holes(self):
+        self.holes = [
+            [ NON_PLACE, NON_PLACE, HOLE, HOLE, HOLE, NON_PLACE, NON_PLACE],
+            [ NON_PLACE, NON_PLACE, HOLE, HOLE, HOLE, NON_PLACE, NON_PLACE],
+            [ HOLE, HOLE, HOLE, HOLE, HOLE, HOLE, HOLE],
+            [ HOLE, HOLE, HOLE, HOLE, HOLE, HOLE, HOLE],
+            [ HOLE, HOLE, HOLE, HOLE, HOLE, HOLE, HOLE],
+            [ NON_PLACE, NON_PLACE, HOLE, HOLE, HOLE, NON_PLACE, NON_PLACE],
+            [ NON_PLACE, NON_PLACE, HOLE, HOLE, HOLE, NON_PLACE, NON_PLACE],
+        ]
+        self.rows = 7
+        self.cols = 7
+
+    def __init_european_holes(self):
+        self.holes = [
+            [ NON_PLACE, NON_PLACE, HOLE, HOLE, HOLE, NON_PLACE, NON_PLACE],
+            [ NON_PLACE, HOLE, HOLE, HOLE, HOLE, HOLE, NON_PLACE],
+            [ HOLE, HOLE, HOLE, HOLE, HOLE, HOLE, HOLE],
+            [ HOLE, HOLE, HOLE, HOLE, HOLE, HOLE, HOLE],
+            [ HOLE, HOLE, HOLE, HOLE, HOLE, HOLE, HOLE],
+            [ NON_PLACE, HOLE, HOLE, HOLE, HOLE, HOLE, NON_PLACE],
+            [ NON_PLACE, NON_PLACE, HOLE, HOLE, HOLE, NON_PLACE, NON_PLACE],
+        ]
+        self.rows = 7
+        self.cols = 7
+
+
+    def __test_line(self, move):
+        # Validate that Start Position, Jumped Peg, and End Posotion are 'in a line'
+        row_displacement = move.jumped_peg[ROW] - move.start_position[ROW]
+        expected_target_row = 2 * row_displacement + move.start_position[ROW]
+        column_displacement = move.jumped_peg[COLUMN] - move.start_position[COLUMN]
+        expected_target_column = 2 * column_displacement + move.start_position[COLUMN]
+        if move.end_position[ROW] != expected_target_row or move.end_position[COLUMN] != expected_target_column:
+            raise ValueError("Peg, Jumpee, and Target do not appear to be in a line: {}".format(move))
+
+        
     def legal_move(self, move):
         # Check move position legality
         if not self.legal_position(move.start_position):
@@ -96,13 +137,7 @@ class Board():
             raise ValueError("Move jumped peg {0} did not contain a peg.".format(move.jumped_peg))
         if self.holes[move.end_position[ROW]][move.end_position[COLUMN]] != HOLE:
             raise ValueError("Move end_position {0} was not empty.".format(move.end_position))
-        # Validate that Start Position, Jumped Peg, and End Posotion are 'in a line'
-        row_displacement = move.jumped_peg[ROW] - move.start_position[ROW]
-        expected_target_row = 2 * row_displacement + move.start_position[ROW]
-        column_displacement = move.jumped_peg[COLUMN] - move.start_position[COLUMN]
-        expected_target_column = 2 * column_displacement + move.start_position[COLUMN]
-        if move.end_position[ROW] != expected_target_row or move.end_position[COLUMN] != expected_target_column:
-            raise ValueError("Peg, Jumpee, and Target do not appear to be in a line: {}".format(move))
+        self.__test_line(move)
         return True
 
     def legal_position(self, pos):
@@ -124,6 +159,9 @@ class Board():
         return ret_moves
 
     def __left_moves(self,pos):
+        """
+        Left moves along a diagonal.  Valid for Triangle puzzle only
+        """
         ret_moves = []
         for displacement in [-1, 1]:
             jumped_row = pos[ROW] + displacement
@@ -138,6 +176,9 @@ class Board():
         return ret_moves
 
     def __right_moves(self,pos):
+        """
+        Right moves along a diagonal.  Valid for Triangle puzzle only
+        """
         ret_moves = []
         for displacement in [-1, 1]:
             jumped_row = pos[ROW] + displacement
