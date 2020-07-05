@@ -74,53 +74,8 @@ class Board():
     rows = None
     cols = None
 
-    def __init_triangle_holes(self):
-        self.holes = [
-            [ HOLE, NON_PLACE, NON_PLACE, NON_PLACE, NON_PLACE],
-            [ PEG, PEG, NON_PLACE, NON_PLACE, NON_PLACE ],
-            [ PEG, PEG, PEG, NON_PLACE, NON_PLACE ],
-            [ PEG, PEG, PEG, PEG, NON_PLACE ],
-            [ PEG, PEG, PEG, PEG, PEG ],
-        ]
-        self.rows = 5
-        self.cols = 5
-
-    def __init_english_holes(self):
-        self.holes = [
-            [ NON_PLACE, NON_PLACE, HOLE, HOLE, HOLE, NON_PLACE, NON_PLACE],
-            [ NON_PLACE, NON_PLACE, HOLE, HOLE, HOLE, NON_PLACE, NON_PLACE],
-            [ HOLE, HOLE, HOLE, HOLE, HOLE, HOLE, HOLE],
-            [ HOLE, HOLE, HOLE, HOLE, HOLE, HOLE, HOLE],
-            [ HOLE, HOLE, HOLE, HOLE, HOLE, HOLE, HOLE],
-            [ NON_PLACE, NON_PLACE, HOLE, HOLE, HOLE, NON_PLACE, NON_PLACE],
-            [ NON_PLACE, NON_PLACE, HOLE, HOLE, HOLE, NON_PLACE, NON_PLACE],
-        ]
-        self.rows = 7
-        self.cols = 7
-
-    def __init_european_holes(self):
-        self.holes = [
-            [ NON_PLACE, NON_PLACE, HOLE, HOLE, HOLE, NON_PLACE, NON_PLACE],
-            [ NON_PLACE, HOLE, HOLE, HOLE, HOLE, HOLE, NON_PLACE],
-            [ HOLE, HOLE, HOLE, HOLE, HOLE, HOLE, HOLE],
-            [ HOLE, HOLE, HOLE, HOLE, HOLE, HOLE, HOLE],
-            [ HOLE, HOLE, HOLE, HOLE, HOLE, HOLE, HOLE],
-            [ NON_PLACE, HOLE, HOLE, HOLE, HOLE, HOLE, NON_PLACE],
-            [ NON_PLACE, NON_PLACE, HOLE, HOLE, HOLE, NON_PLACE, NON_PLACE],
-        ]
-        self.rows = 7
-        self.cols = 7
-
-
-    def __test_line(self, move):
-        # Validate that Start Position, Jumped Peg, and End Posotion are 'in a line'
-        row_displacement = move.jumped_peg[ROW] - move.start_position[ROW]
-        expected_target_row = 2 * row_displacement + move.start_position[ROW]
-        column_displacement = move.jumped_peg[COLUMN] - move.start_position[COLUMN]
-        expected_target_column = 2 * column_displacement + move.start_position[COLUMN]
-        if move.end_position[ROW] != expected_target_row or move.end_position[COLUMN] != expected_target_column:
-            raise ValueError("Peg, Jumpee, and Target do not appear to be in a line: {}".format(move))
-
+    def test_line(self, move):
+        raise NotImplementedError()
         
     def legal_move(self, move):
         # Check move position legality
@@ -137,7 +92,7 @@ class Board():
             raise ValueError("Move jumped peg {0} did not contain a peg.".format(move.jumped_peg))
         if self.holes[move.end_position[ROW]][move.end_position[COLUMN]] != HOLE:
             raise ValueError("Move end_position {0} was not empty.".format(move.end_position))
-        self.__test_line(move)
+        self.test_line(move)
         return True
 
     def legal_position(self, pos):
@@ -146,6 +101,100 @@ class Board():
         """
         return (pos[ROW] >= 0 and pos[ROW] < self.rows and
                 pos[COLUMN] >= 0 and pos[COLUMN] < self.cols)
+    
+    def legal_moves_from_position(self, pos):
+        raise NotImplementedError()
+
+    def legal_moves(self):
+        ret_moves = []
+        for x in range(self.cols):
+            for y in range(self.rows):
+                ret_moves += self.legal_moves_from_position((y,x))
+        return ret_moves
+
+    def apply_move(self, move):
+        if not self.legal_move(move):
+            raise ValueError("Attempting to apply a illegal move: {}".format(move))
+        self.holes[move.start_position[ROW]][move.start_position[COLUMN]] = HOLE
+        self.holes[move.jumped_peg[ROW]][move.jumped_peg[COLUMN]] = HOLE
+        self.holes[move.end_position[ROW]][move.end_position[COLUMN]] = PEG
+        return move.cost
+
+    def undo_move(self, move):
+        self.holes[move.start_position[ROW]][move.start_position[COLUMN]] = PEG
+        self.holes[move.jumped_peg[ROW]][move.jumped_peg[COLUMN]] = PEG
+        self.holes[move.end_position[ROW]][move.end_position[COLUMN]] = HOLE
+        # TODO: Validate that move was legal before undoing
+        if not self.legal_move(move):
+            raise ValueError("Move illegal after undoing itself. Something is wrong!: {}".format(move))
+        return move.cost
+
+    def solved(self):
+        peg_count = 0
+        for x in range(self.cols):
+            for y in range(self.rows):
+                if self.holes[y][x] == PEG:
+                    peg_count += 1
+            if peg_count > 1:
+                return False
+        return True
+
+    def validate_solution(moves, display=False):
+        starting_state = Board()
+        for move in moves:
+            if display:
+                print(self)
+                print(move)
+            starting_state.apply_move(move)
+        return self.solved()
+
+    def __init__(self):
+        pass
+        
+
+    def __str__(self):
+        ret_str = ""
+        for row in self.holes:
+            for column in row:
+                if column == PEG:
+                    ret_str +=  PEG_CHAR
+                elif column == HOLE:
+                    ret_str += HOLE_CHAR
+                elif column == NON_PLACE:
+                    ret_str += NULL_CHAR
+                else:
+                    raise ValueError("Got unexpected value in holes, expected one of {-1, 0, 1}, but saw: " + str(column))
+            ret_str += '\n'
+        return ret_str
+
+class TriangleBoard(Board):
+    def __init__(self):
+        self.holes = [
+            [ HOLE, NON_PLACE, NON_PLACE, NON_PLACE, NON_PLACE],
+            [ PEG, PEG, NON_PLACE, NON_PLACE, NON_PLACE ],
+            [ PEG, PEG, PEG, NON_PLACE, NON_PLACE ],
+            [ PEG, PEG, PEG, PEG, NON_PLACE ],
+            [ PEG, PEG, PEG, PEG, PEG ],
+        ]
+        self.rows = 5
+        self.cols = 5
+
+    def copy(self):
+        ret = TriangleBoard()
+        for x in range(self.cols):
+           for y in range(self.rows):
+                ret.holes[y][x] = self.holes[y][x]
+        return ret
+
+
+    def test_line(self, move):
+        # Validate that Start Position, Jumped Peg, and End Posotion are 'in a line'
+        row_displacement = move.jumped_peg[ROW] - move.start_position[ROW]
+        expected_target_row = 2 * row_displacement + move.start_position[ROW]
+        column_displacement = move.jumped_peg[COLUMN] - move.start_position[COLUMN]
+        expected_target_column = 2 * column_displacement + move.start_position[COLUMN]
+        if move.end_position[ROW] != expected_target_row or move.end_position[COLUMN] != expected_target_column:
+            raise ValueError("Peg, Jumpee, and Target do not appear to be in a line: {}".format(move))
 
     def __lateral_moves(self, pos):
         ret_moves = []
@@ -200,74 +249,87 @@ class Board():
             return []
         return self.__lateral_moves(pos) + self.__left_moves(pos) + self.__right_moves(pos)
 
-    def legal_moves(self):
-        ret_moves = []
-        for x in range(self.cols):
-            for y in range(self.rows):
-                ret_moves += self.legal_moves_from_position((y,x))
-        return ret_moves
+
+class EnglishBoard(Board):
+    def __init__(self):
+        self.holes = [
+            [ NON_PLACE, NON_PLACE, PEG, PEG, PEG, NON_PLACE, NON_PLACE],
+            [ NON_PLACE, NON_PLACE, PEG, PEG, PEG, NON_PLACE, NON_PLACE],
+            [ PEG, PEG, PEG, PEG, PEG, PEG, PEG],
+            [ PEG, PEG, PEG, HOLE, PEG, PEG, PEG],
+            [ PEG, PEG, PEG, PEG, PEG, PEG, PEG],
+            [ NON_PLACE, NON_PLACE, PEG, PEG, PEG, NON_PLACE, NON_PLACE],
+            [ NON_PLACE, NON_PLACE, PEG, PEG, PEG, NON_PLACE, NON_PLACE],
+        ]
+        self.rows = 7
+        self.cols = 7
 
     def copy(self):
-        ret = Board()
+        ret = EnglishBoard()
         for x in range(self.cols):
            for y in range(self.rows):
                 ret.holes[y][x] = self.holes[y][x]
         return ret
 
-    def apply_move(self, move):
-        if not self.legal_move(move):
-            raise ValueError("Attempting to apply a illegal move: {}".format(move))
-        self.holes[move.start_position[ROW]][move.start_position[COLUMN]] = HOLE
-        self.holes[move.jumped_peg[ROW]][move.jumped_peg[COLUMN]] = HOLE
-        self.holes[move.end_position[ROW]][move.end_position[COLUMN]] = PEG
-        return move.cost
+    def test_line(self, move):
+        # Validate that Start Position, Jumped Peg, and End Posotion are 'in a line'
+        row_displacement = move.jumped_peg[ROW] - move.start_position[ROW]
+        expected_target_row = 2 * row_displacement + move.start_position[ROW]
+        column_displacement = move.jumped_peg[COLUMN] - move.start_position[COLUMN]
+        expected_target_column = 2 * column_displacement + move.start_position[COLUMN]
+        if move.end_position[ROW] != expected_target_row or move.end_position[COLUMN] != expected_target_column:
+            raise ValueError("Peg, Jumpee, and Target do not appear to be in a line: {}".format(move))
 
-    def undo_move(self, move):
-        self.holes[move.start_position[ROW]][move.start_position[COLUMN]] = PEG
-        self.holes[move.jumped_peg[ROW]][move.jumped_peg[COLUMN]] = PEG
-        self.holes[move.end_position[ROW]][move.end_position[COLUMN]] = HOLE
-        # TODO: Validate that move was legal before undoing
-        if not self.legal_move(move):
-            raise ValueError("Move illegal after undoing itself. Something is wrong!: {}".format(move))
-        return move.cost
+    def legal_moves_from_position(self, pos):
+        if not self.legal_position(pos):
+            raise ValueError("{0} is not a legal board position".format(pos))
+        moves = []
+        # Assume we're computing legal moves from a peg
+        if self.holes[pos[ROW]][pos[COLUMN]] != PEG:
+            return moves
+        for displacement in [-1, 1]:
+            jumped_row = pos[ROW] + displacement
+            target_row = pos[ROW] + 2 * displacement
+            jumped_col = pos[COLUMN] + displacement
+            target_col = pos[COLUMN] + 2 * displacement
+            jumped_vertical_pos = (jumped_row, pos[COLUMN])
+            target_vertical_pos = (target_row, pos[COLUMN])
+            jumped_lateral_pos = (pos[ROW], jumped_col)
+            target_lateral_pos = (pos[ROW], target_col)
+            if (self.legal_position(jumped_lateral_pos) and
+                self.holes[pos[ROW]][jumped_col] == PEG and
+                self.legal_position(target_lateral_pos) and
+                self.holes[pos[ROW]][target_col] == HOLE):
+                moves.append(Move(pos, jumped_lateral_pos, target_lateral_pos, "Lateral"))
+            if (self.legal_position(jumped_vertical_pos) and
+                self.holes[jumped_row][pos[COLUMN]] == PEG and
+                self.legal_position(target_vertical_pos) and
+                self.holes[target_row][pos[COLUMN]] == HOLE):
+                moves.append(Move(pos, jumped_vertical_pos, target_vertical_pos, "Vertical"))
+        return moves
 
-    def solved(self):
-        peg_count = 0
+class EuropeanBoard(EnglishBoard):
+    def __init_european__(self):
+        self.holes = [
+            [ NON_PLACE, NON_PLACE, PEG, PEG, PEG, NON_PLACE, NON_PLACE],
+            [ NON_PLACE, PEG, PEG, PEG, PEG, PEG, NON_PLACE],
+            [ PEG, PEG, PEG, PEG, PEG, PEG, PEG],
+            [ PEG, PEG, PEG, HOLE, PEG, PEG, PEG],
+            [ PEG, PEG, PEG, PEG, PEG, PEG, PEG],
+            [ NON_PLACE, PEG, PEG, PEG, PEG, PEG, NON_PLACE],
+            [ NON_PLACE, NON_PLACE, PEG, PEG, PEG, NON_PLACE, NON_PLACE],
+        ]
+        self.rows = 7
+        self.cols = 7
+
+    def copy(self):
+        ret = EnglishBoard()
         for x in range(self.cols):
-            for y in range(self.rows):
-                if self.holes[y][x] == PEG:
-                    peg_count += 1
-            if peg_count > 1:
-                return False
-        return True
+           for y in range(self.rows):
+                ret.holes[y][x] = self.holes[y][x]
+        return ret
 
-    def validate_solution(moves, display=False):
-        starting_state = Board()
-        for move in moves:
-            if display:
-                print(self)
-                print(move)
-            starting_state.apply_move(move)
-        return self.solved()
-
-    def __init__(self):
-        self.__init_triangle_holes()
         
-
-    def __str__(self):
-        ret_str = ""
-        for row in self.holes:
-            for column in row:
-                if column == PEG:
-                    ret_str +=  PEG_CHAR
-                elif column == HOLE:
-                    ret_str += HOLE_CHAR
-                elif column == NON_PLACE:
-                    ret_str += NULL_CHAR
-                else:
-                    raise ValueError("Got unexpected value in holes, expected one of {-1, 0, 1}, but saw: " + str(column))
-            ret_str += '\n'
-        return ret_str
     
 
 class PegSolitaireInterface(SearchInterface):
